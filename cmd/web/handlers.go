@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"html/template"
 	"net/http"
 	"strconv"
 	"time"
@@ -11,36 +10,17 @@ import (
 )
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("Server", "Go")
-
 	snippets, err := models.GetAllSnippets(app.db)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
-	data := templateData{
+	app.render(w, r, http.StatusOK, "home.tmpl", templateData{
 		Snippets: snippets,
-	}
-
-	files := []string{
-		"./ui/html/base.tmpl",
-		"./ui/html/partials/nav.tmpl",
-		"./ui/html/pages/home.tmpl",
-	}
-
-	ts, err := template.ParseFiles(files...)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-
-	err = ts.ExecuteTemplate(w, "base", data)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
+	})
 }
+
 func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil || id < 1 {
@@ -50,39 +30,17 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 
 	snippet, err := models.GetSnippet(app.db, uint(id))
 	if err != nil {
-		switch err {
-		case models.ErrNoRecord:
-			app.clientError(w, http.StatusNotFound)
-		case models.ErrUnauthorized:
-			app.clientError(w, http.StatusForbidden)
-		default:
+		if err == models.ErrNoRecord {
+			http.NotFound(w, r)
+		} else {
 			app.serverError(w, r, err)
 		}
 		return
 	}
 
-	data := struct {
-		Snippet *models.Snippet
-	}{
+	app.render(w, r, http.StatusOK, "view.tmpl", templateData{
 		Snippet: snippet,
-	}
-
-	files := []string{
-		"./ui/html/base.tmpl",
-		"./ui/html/partials/nav.tmpl",
-		"./ui/html/pages/view.tmpl",
-	}
-
-	ts, err := template.ParseFiles(files...)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-
-	err = ts.ExecuteTemplate(w, "base", data)
-	if err != nil {
-		app.serverError(w, r, err)
-	}
+	})
 }
 func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Display a form for creating a new snippet..."))

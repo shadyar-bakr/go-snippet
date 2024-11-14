@@ -6,13 +6,14 @@ import (
 )
 
 type snippetCreateForm struct {
-	Title       string
-	Content     string
-	Expires     int
-	FieldErrors map[string]string
+	Title       string            `form:"title"`
+	Content     string            `form:"content"`
+	Expires     int               `form:"expires"`
+	FieldErrors map[string]string `form:"-"`
 }
 
 func (f *snippetCreateForm) Validate() bool {
+
 	f.FieldErrors = make(map[string]string)
 
 	if strings.TrimSpace(f.Title) == "" {

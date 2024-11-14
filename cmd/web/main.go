@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/go-playground/form"
 	"github.com/shadyar-bakr/go-snippet/internal/models"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -18,6 +19,7 @@ type application struct {
 	snippets      *models.Snippet
 	db            *gorm.DB
 	templateCache map[string]*template.Template
+	formDecoder   *form.Decoder
 }
 
 func main() {
@@ -51,11 +53,14 @@ func main() {
 		os.Exit(1)
 	}
 
+	formDecoder := form.NewDecoder()
+
 	app := &application{
 		logger:        logger,
 		snippets:      &models.Snippet{},
 		db:            db,
 		templateCache: templateCache,
+		formDecoder:   formDecoder,
 	}
 
 	logger.Info("Server Started", "addr", *addr)

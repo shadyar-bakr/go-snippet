@@ -1,7 +1,6 @@
 package models
 
 import (
-	"errors"
 	"time"
 
 	"gorm.io/gorm"
@@ -9,49 +8,82 @@ import (
 
 type Snippet struct {
 	gorm.Model
-	Title     string    `gorm:"size:100;not null"`
-	Content   string    `gorm:"type:text;not null"`
-	Expires   time.Time `gorm:"not null;index"`
-	IsExpired bool      `gorm:"default:false"`
+	Title   string    `gorm:"size:100;not null"`
+	Content string    `gorm:"type:text;not null"`
+	Expires time.Time `gorm:"not null;index"`
 }
 
-type SnippetModel struct {
-	DB *gorm.DB
-}
-
-func NewSnippetModel(db *gorm.DB) *SnippetModel {
-	return &SnippetModel{DB: db}
-}
-
-func (m *SnippetModel) Insert(snippet *Snippet) error {
-	return m.DB.Create(snippet).Error
-}
-
-func (m *SnippetModel) Get(id uint) (*Snippet, error) {
-	var snippet Snippet
-	err := m.DB.Where("expires > ? AND deleted_at IS NULL", time.Now()).First(&snippet, id).Error
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("snippet not found")
-		}
-		return nil, err
+func CreateSnippet(db *gorm.DB, snippet *Snippet) error {
+	if snippet.Title == "" || snippet.Content == "" {
+		return ErrInvalidInput
 	}
+
+	result := db.Create(snippet)
+	if result.Error != nil {
+		return ErrInternalServer
+	}
+	return nil
+}
+
+func GetSnippet(db *gorm.DB, id uint) (*Snippet, error) {
+	var snippet Snippet
+	result := db.First(&snippet, id)
+
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, ErrNoRecord
+		}
+		return nil, ErrInternalServer
+	}
+
+	if time.Now().After(snippet.Expires) {
+		return nil, ErrUnauthorized
+	}
+
 	return &snippet, nil
 }
 
-func (m *SnippetModel) Latest() ([]Snippet, error) {
+func GetAllSnippets(db *gorm.DB) ([]Snippet, error) {
 	var snippets []Snippet
-	err := m.DB.Where("expires > ? AND deleted_at IS NULL", time.Now()).
-		Order("created_at desc").
-		Limit(10).
-		Find(&snippets).Error
-	return snippets, err
+	result := db.Where("expires > ?", time.Now()).
+		Order("created_at DESC").
+		Find(&snippets)
+
+	if result.Error != nil {
+		return nil, ErrInternalServer
+	}
+
+	return snippets, nil
 }
 
-func (m *SnippetModel) Delete(id uint) error {
-	return m.DB.Delete(&Snippet{}, id).Error
+func UpdateSnippet(db *gorm.DB, snippet *Snippet) error {
+	if snippet.Title == "" || snippet.Content == "" {
+		return ErrInvalidInput
+	}
+
+	result := db.Save(snippet)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return ErrNoRecord
+		}
+		return ErrInternalServer
+	}
+
+	return nil
 }
 
-func (m *SnippetModel) Update(snippet *Snippet) error {
-	return m.DB.Save(snippet).Error
+func DeleteSnippet(db *gorm.DB, id uint) error {
+	result := db.Delete(&Snippet{}, id)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return ErrNoRecord
+		}
+		return ErrInternalServer
+	}
+
+	if result.RowsAffected == 0 {
+		return ErrNoRecord
+	}
+
+	return nil
 }

@@ -2,5 +2,28 @@
 
 {{define "main"}}
 <h2>Latest Snippets</h2>
-<p>There's nothing to see here yet!</p>
+{{if .Snippets}}
+<table>
+  <tr>
+    <th>Title</th>
+    <th>Created</th>
+    <th>ID</th>
+  </tr>
+  {{
+    range.Snippets
+  }}
+  <tr>
+    <td>
+      <a href="/snippet/view/{{.ID}}">{{.Title}}</a>
+    </td>
+    <td>{{.CreatedAt.Format "02 Jan 2006 at 15:04"}}</td>
+    <td>#{{.ID}}</td>
+  </tr>
+  {{
+    end
+  }}
+</table>
+{{else}}
+<p>No snippets found!</p>
+{{ end }}
 {{ end }}

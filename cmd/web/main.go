@@ -14,7 +14,8 @@ import (
 
 type application struct {
 	logger   *slog.Logger
-	snippets *models.SnippetModel
+	snippets *models.Snippet
+	db       *gorm.DB
 }
 
 func main() {
@@ -44,7 +45,8 @@ func main() {
 
 	app := &application{
 		logger:   logger,
-		snippets: models.NewSnippetModel(db),
+		snippets: &models.Snippet{},
+		db:       db,
 	}
 
 	logger.Info("Server Started", "addr", *addr)

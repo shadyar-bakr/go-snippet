@@ -4,19 +4,16 @@
 <form action="/snippet/create" method="POST">
   <div>
     <label>Title:</label>
-    <input type="text" name="title" required />
+    <input type="text" name="title" />
   </div>
   <div>
     <label>Content:</label>
-    <textarea name="content" required></textarea>
+    <textarea name="content"></textarea>
   </div>
   <div>
     <label>Delete in:</label>
-    <select name="expires">
-      <option value="365">One Year</option>
-      <option value="7">One Week</option>
-      <option value="1">One Day</option>
-    </select>
+    <input type="radio" name="expires" value="365" checked /> One Year
+    <input type="radio" name="expires" value="7" /> One Week <input type="radio" name="expires" value="1" /> One Day
   </div>
   <div>
     <input type="submit" value="Publish snippet" />

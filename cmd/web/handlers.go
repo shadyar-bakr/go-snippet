@@ -16,9 +16,10 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.render(w, r, http.StatusOK, "home.tmpl", templateData{
-		Snippets: snippets,
-	})
+	data := app.newTemplateData(r)
+	data.Snippets = snippets
+
+	app.render(w, r, http.StatusOK, "home.tmpl", data)
 }
 
 func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
@@ -30,22 +31,23 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 
 	snippet, err := models.GetSnippet(app.db, uint(id))
 	if err != nil {
-		if err == models.ErrNoRecord {
+		switch err {
+		case models.ErrNoRecord:
 			http.NotFound(w, r)
-		} else {
+		default:
 			app.serverError(w, r, err)
 		}
 		return
 	}
 
-	app.render(w, r, http.StatusOK, "view.tmpl", templateData{
-		Snippet: snippet,
-	})
+	data := app.newTemplateData(r)
+	data.Snippet = snippet
+
+	app.render(w, r, http.StatusOK, "view.tmpl", data)
 }
 func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Display a form for creating a new snippet..."))
 }
-
 func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request) {
 	// Parse form data and create snippet object
 	err := r.ParseForm()

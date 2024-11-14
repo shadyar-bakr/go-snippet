@@ -76,9 +76,7 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 		FieldErrors: map[string]string{},
 	}
 
-	form.Validate()
-
-	if len(form.FieldErrors) > 0 {
+	if !form.Validate() {
 		data := app.newTemplateData(r)
 		data.Form = form
 		app.render(w, r, http.StatusUnprocessableEntity, "create.tmpl", data)

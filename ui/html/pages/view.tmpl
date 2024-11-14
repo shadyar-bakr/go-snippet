@@ -1,4 +1,4 @@
-{{define "title"}}Snippet #{{.Snippet.ID}}{{ end }}
+{{define "title"}}Snippet View{{ end }}
 
 {{define "main"}}
 {{ with.Snippet }}
@@ -9,8 +9,8 @@
   </div>
   <pre><code>{{.Content}}</code></pre>
   <div class="metadata">
-    <time>Created: {{.CreatedAt.Format "02 Jan 2006 at 15:04"}}</time>
-    <time>Expires: {{.Expires.Format "02 Jan 2006 at 15:04"}}</time>
+    <time>Created: {{.CreatedAt | humanDate}}</time>
+    <time>Expires: {{.Expires | humanDate}}</time>
   </div>
 </div>
 {{ end }}

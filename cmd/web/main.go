@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"html/template"
 	"log/slog"
 	"net/http"
 	"os"
@@ -13,9 +14,10 @@ import (
 )
 
 type application struct {
-	logger   *slog.Logger
-	snippets *models.Snippet
-	db       *gorm.DB
+	logger        *slog.Logger
+	snippets      *models.Snippet
+	db            *gorm.DB
+	templateCache map[string]*template.Template
 }
 
 func main() {
@@ -43,10 +45,17 @@ func main() {
 
 	defer sqlDB.Close()
 
+	templateCache, err := newTemplateCache()
+	if err != nil {
+		logger.Error("failed to create template cache", "error", err)
+		os.Exit(1)
+	}
+
 	app := &application{
-		logger:   logger,
-		snippets: &models.Snippet{},
-		db:       db,
+		logger:        logger,
+		snippets:      &models.Snippet{},
+		db:            db,
+		templateCache: templateCache,
 	}
 
 	logger.Info("Server Started", "addr", *addr)

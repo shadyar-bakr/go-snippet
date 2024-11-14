@@ -16,7 +16,7 @@
     <td>
       <a href="/snippet/view/{{.ID}}">{{.Title}}</a>
     </td>
-    <td>{{.CreatedAt.Format "02 Jan 2006 at 15:04"}}</td>
+    <td>{{.CreatedAt | humanDate}}</td>
     <td>#{{.ID}}</td>
   </tr>
   {{
@@ -24,6 +24,6 @@
   }}
 </table>
 {{else}}
-<p>No snippets found!</p>
+<p>There's nothing to see here... yet!</p>
 {{ end }}
 {{ end }}

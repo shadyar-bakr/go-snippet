@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"html/template"
 	"net/http"
 	"strconv"
 	"time"
@@ -11,38 +10,18 @@ import (
 )
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("Server", "Go")
-
 	snippets, err := models.GetAllSnippets(app.db)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
-	data := struct {
-		Snippets []models.Snippet
-	}{
-		Snippets: snippets,
-	}
+	data := app.newTemplateData(r)
+	data.Snippets = snippets
 
-	files := []string{
-		"./ui/html/base.tmpl",
-		"./ui/html/partials/nav.tmpl",
-		"./ui/html/pages/home.tmpl",
-	}
-
-	ts, err := template.ParseFiles(files...)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-
-	err = ts.ExecuteTemplate(w, "base", data)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
+	app.render(w, r, http.StatusOK, "home.tmpl", data)
 }
+
 func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil || id < 1 {
@@ -54,23 +33,21 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch err {
 		case models.ErrNoRecord:
-			app.clientError(w, http.StatusNotFound)
-		case models.ErrUnauthorized:
-			app.clientError(w, http.StatusForbidden)
+			http.NotFound(w, r)
 		default:
 			app.serverError(w, r, err)
 		}
 		return
 	}
 
-	// Render snippet
-	fmt.Fprintf(w, "%v", snippet)
-}
+	data := app.newTemplateData(r)
+	data.Snippet = snippet
 
+	app.render(w, r, http.StatusOK, "view.tmpl", data)
+}
 func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Display a form for creating a new snippet..."))
 }
-
 func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request) {
 	// Parse form data and create snippet object
 	err := r.ParseForm()

@@ -3,6 +3,7 @@ module github.com/shadyar-bakr/go-snippet
 go 1.23.3
 
 require (
+	github.com/justinas/alice v1.2.0
 	gorm.io/driver/sqlite v1.5.6
 	gorm.io/gorm v1.25.12
 )

@@ -2,9 +2,11 @@ package main
 
 import (
 	"net/http"
+
+	"github.com/justinas/alice"
 )
 
-func (app *application) routes() *http.ServeMux {
+func (app *application) routes() http.Handler {
 	mux := http.NewServeMux()
 
 	// Add proper headers for static files
@@ -24,5 +26,7 @@ func (app *application) routes() *http.ServeMux {
 	// POST
 	mux.HandleFunc("POST /snippet/create", app.snippetCreatePost)
 
-	return mux
+	standard := alice.New(app.recoverPanic, app.logRequest, commonHeaders)
+
+	return standard.Then(mux)
 }

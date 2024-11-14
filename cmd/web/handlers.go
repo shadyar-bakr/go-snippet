@@ -46,26 +46,35 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 	app.render(w, r, http.StatusOK, "view.tmpl", data)
 }
 func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Display a form for creating a new snippet..."))
+	data := app.newTemplateData(r)
+
+	data.Form = snippetCreateForm{
+		Expires: 365,
+	}
+
+	app.render(w, r, http.StatusOK, "create.tmpl", data)
 }
+
 func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request) {
-	// Parse form data and create snippet object
-	err := r.ParseForm()
+	var form snippetCreateForm
+
+	err := app.decodePostForm(r, &form)
 	if err != nil {
 		app.clientError(w, http.StatusBadRequest)
 		return
 	}
 
-	expires, err := time.Parse("2006-01-02", r.PostForm.Get("expires"))
-	if err != nil {
-		app.clientError(w, http.StatusBadRequest)
+	if !form.Validate() {
+		data := app.newTemplateData(r)
+		data.Form = form
+		app.render(w, r, http.StatusUnprocessableEntity, "create.tmpl", data)
 		return
 	}
 
 	snippet := &models.Snippet{
-		Title:   r.PostForm.Get("title"),
-		Content: r.PostForm.Get("content"),
-		Expires: expires,
+		Title:   form.Title,
+		Content: form.Content,
+		Expires: time.Now().AddDate(0, 0, form.Expires),
 	}
 
 	err = models.CreateSnippet(app.db, snippet)
@@ -79,6 +88,5 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Redirect or respond with success
 	http.Redirect(w, r, fmt.Sprintf("/snippet/view/%d", snippet.ID), http.StatusSeeOther)
 }

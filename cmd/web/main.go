@@ -61,6 +61,7 @@ func main() {
 	sessionManager := scs.New()
 	sessionManager.Store = sqlite3store.New(sqlDB)
 	sessionManager.Lifetime = 12 * time.Hour
+	sessionManager.Cookie.Secure = true
 
 	app := &application{
 		logger:         logger,
@@ -79,7 +80,7 @@ func main() {
 
 	logger.Info("Server Started", "addr", *addr)
 
-	err = srv.ListenAndServe()
+	err = srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem")
 	logger.Error(err.Error())
 	os.Exit(1)
 }

@@ -8,6 +8,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/alexedwards/scs/sqlite3store"
+	"github.com/alexedwards/scs/v2"
 	"github.com/go-playground/form"
 	"github.com/shadyar-bakr/go-snippet/internal/models"
 	"gorm.io/driver/sqlite"
@@ -15,11 +17,12 @@ import (
 )
 
 type application struct {
-	logger        *slog.Logger
-	snippets      *models.Snippet
-	db            *gorm.DB
-	templateCache map[string]*template.Template
-	formDecoder   *form.Decoder
+	logger         *slog.Logger
+	snippets       *models.Snippet
+	db             *gorm.DB
+	templateCache  map[string]*template.Template
+	formDecoder    *form.Decoder
+	sessionManager *scs.SessionManager
 }
 
 func main() {
@@ -55,12 +58,17 @@ func main() {
 
 	formDecoder := form.NewDecoder()
 
+	sessionManager := scs.New()
+	sessionManager.Store = sqlite3store.New(sqlDB)
+	sessionManager.Lifetime = 12 * time.Hour
+
 	app := &application{
-		logger:        logger,
-		snippets:      &models.Snippet{},
-		db:            db,
-		templateCache: templateCache,
-		formDecoder:   formDecoder,
+		logger:         logger,
+		snippets:       &models.Snippet{},
+		db:             db,
+		templateCache:  templateCache,
+		formDecoder:    formDecoder,
+		sessionManager: sessionManager,
 	}
 
 	logger.Info("Server Started", "addr", *addr)
